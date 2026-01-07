@@ -1,7 +1,7 @@
 # Illusion-HealthScript
 Simple Server Script to replace the base health scripts from Player.Character by one single Script 
 
-It's based on Roblox base script but modified to it detects whenever the Character is added to Workspace etc..
+It's based on Roblox base script but modified so it detects whenever the Character is added to Workspace etc..
 
 To be placed in ServerScriptService.
 
