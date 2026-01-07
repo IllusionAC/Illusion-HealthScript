@@ -17,3 +17,4 @@ local replace = Instance.new("IntValue")
 replace.Name = "health"
 replace.Parent = game:GetService("StarterPlayer").StarterCharacterScripts
 ```
+Rest is basic scripting.
