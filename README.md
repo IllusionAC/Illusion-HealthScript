@@ -3,6 +3,10 @@ Simple Server Script to replace the base health scripts from Player.Character by
 
 It's based on Roblox base script but modified to it detects whenever the Character is added to Workspace etc..
 
+To be placed in ServerScriptService.
+
+----
+
 The base constants here you can change in the script
 ```luau
 REGEN_RATE = 1 / 20
