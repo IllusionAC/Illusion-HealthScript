@@ -1,67 +1,97 @@
 --!strict
 local Players = game:GetService("Players")
+
 local replace = Instance.new("IntValue")
-replace.Name = "health"
+replace.Name = "Health"
 replace.Parent = game:GetService("StarterPlayer").StarterCharacterScripts
 
-local REGEN_RATE = 1 / 20
+local REGEN_RATE = 0.05
 local REGEN_STEP = 0.01
 local REGEN_DELAY = 2
 
-local function StartRegen(Humanoid: Humanoid)
-	local isRegenerating = false
+local activeRegen: {[Humanoid]: boolean} = {}
+local connections: {[Humanoid]: {RBXScriptConnection}} = {}
 
-	local function RegenStep()
-		if not Humanoid or Humanoid.Health <= 0 or Humanoid.Health >= Humanoid.MaxHealth then
-			isRegenerating = false
-			return
-		end
+local function startRegen(humanoid: Humanoid)
+	if activeRegen[humanoid] then return end
 
-		local healAmount = REGEN_STEP * REGEN_RATE * Humanoid.MaxHealth
-		Humanoid.Health = math.min(Humanoid.Health + healAmount, Humanoid.MaxHealth)
+	activeRegen[humanoid] = true
 
-		task.delay(REGEN_STEP, RegenStep)
-	end
+	task.delay(REGEN_DELAY, function()
+		while activeRegen[humanoid] do
+			if humanoid.Health <= 0 or humanoid.Health >= humanoid.MaxHealth then
+				activeRegen[humanoid] = false
+				break
+			end
 
-	local BeginRegen = function()
-		if isRegenerating or not Humanoid or Humanoid.Health <= 0 then return end
-		isRegenerating = true
-		task.delay(REGEN_DELAY, RegenStep)
-	end
+			local heal = REGEN_RATE * REGEN_STEP * humanoid.MaxHealth
 
-	Humanoid.HealthChanged:Connect(function(health)
-		if health > 0 and health < Humanoid.MaxHealth then
-			BeginRegen()
+			humanoid.Health = math.min(humanoid.Health + heal, humanoid.MaxHealth)
+
+			task.wait(REGEN_STEP)
 		end
 	end)
+end
 
-	if Humanoid.Health > 0 and Humanoid.Health < Humanoid.MaxHealth then
-		BeginRegen()
+local function cleanupHumanoid(humanoid: Humanoid)
+	activeRegen[humanoid] = nil
+
+	local conns = connections[humanoid]
+	if conns then
+		for _, conn in conns do
+			conn:Disconnect()
+		end
+	end
+
+	connections[humanoid] = nil
+end
+
+local function onCharacterAdded(character: Model)
+	repeat task.wait() until character:FindFirstChildOfClass("Humanoid")
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	if connections[humanoid] then return end
+
+	connections[humanoid] = {}
+
+	table.insert(connections[humanoid], 
+		humanoid.HealthChanged:Connect(function(health)
+			if health > 0 and health < humanoid.MaxHealth then
+				startRegen(humanoid)
+			end
+		end))
+
+	table.insert(connections[humanoid],
+		humanoid.Died:Connect(function()
+			cleanupHumanoid(humanoid)
+		end))
+
+	if humanoid.Health > 0 and humanoid.Health < humanoid.MaxHealth then
+		startRegen(humanoid)
 	end
 end
 
-local function OnCharacterAdded(Character: Model)
-	local Humanoid = Character:FindFirstChildOfClass("Humanoid")
-	if not Humanoid then return end
+local function onPlayerAdded(player: Player)
+	player.CharacterAdded:Connect(onCharacterAdded)
 
-	local oldHealthObj = Character:FindFirstChild("Health")
-	if oldHealthObj then oldHealthObj:Destroy() end
-
-	StartRegen(Humanoid)
-end
-
-local function OnPlayerAdded(Player: Player)
-	Player.CharacterAdded:Connect(function(Character)
-		OnCharacterAdded(Character)
-	end)
-
-	if Player.Character then
-		OnCharacterAdded(Player.Character)
+	if player.Character then
+		onCharacterAdded(player.Character)
 	end
 end
 
-for _, Player in Players:GetPlayers() do
-	OnPlayerAdded(Player)
+local function onPlayerRemoving(player: Player)
+	if player.Character then
+		local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			cleanupHumanoid(humanoid)
+		end
+	end
 end
 
-Players.PlayerAdded:Connect(OnPlayerAdded)
+for _, player in ipairs(Players:GetPlayers()) do
+	onPlayerAdded(player)
+end
+
+Players.PlayerAdded:Connect(onPlayerAdded)
+Players.PlayerRemoving:Connect(onPlayerRemoving)
