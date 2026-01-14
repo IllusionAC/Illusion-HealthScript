@@ -9,7 +9,7 @@ To be placed in ServerScriptService.
 
 The base constants here you can change in the script
 ```luau
-REGEN_RATE = 1 / 20
+REGEN_RATE = 0.05
 REGEN_STEP = 0.01
 REGEN_DELAY = 2
 ```
