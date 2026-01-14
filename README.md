@@ -18,7 +18,7 @@ These three lines here are necessary: When the server start, they will create an
 Doing that actually does prevent the script from being created, while just deleting the script means it started running, and it's not a behaviour we would like.
 ```luau
 local replace = Instance.new("IntValue")
-replace.Name = "health"
+replace.Name = "Health"
 replace.Parent = game:GetService("StarterPlayer").StarterCharacterScripts
 ```
 Rest is basic scripting.
