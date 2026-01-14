@@ -89,7 +89,7 @@ local function onPlayerRemoving(player: Player)
 	end
 end
 
-for _, player in ipairs(Players:GetPlayers()) do
+for _, player in Players:GetPlayers() do
 	onPlayerAdded(player)
 end
 
